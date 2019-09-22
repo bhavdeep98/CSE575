@@ -9,7 +9,8 @@ Created on Mon Sep 16 18:34:53 2019
 import scipy.io
 import numpy as np
 import matplotlib.pyplot as plt
-from future.utils import iteritems
+#from future.utils import iteritems
+import pandas
 import math
 
 class NaiveBayes():
@@ -55,7 +56,7 @@ class NaiveBayes():
 
 class NaiveBayes2():
     #Function to apply 1-d Gaussian Normal Distribution
-    def multivariate_normal(self,x,mean,covariance):
+    def __multivariate_normal(self,x,mean,covariance):
        x_m=np.subtract(x,mean)
        return (1/(np.sqrt((2*np.pi)**2 * np.linalg.det(covariance)))*np.exp(-((x_m).T.dot(np.linalg.inv(covariance)).dot(x_m))/2))
 
@@ -73,9 +74,9 @@ class NaiveBayes2():
 #        print(self.gaussians)
 #        print(len(self.gaussians[0]['mean']))
 #        print(self.priors)
-        self.multivariateMean()
+        self.__multivariateMean()
         
-    def multivariateMean(self):
+    def __multivariateMean(self):
         self.multivariate = {}
         self.covariance = {}
         for label in self.gaussians.keys():
@@ -94,51 +95,47 @@ class NaiveBayes2():
             testSample = [np.mean(sample),np.std(sample)]
             probabilities = {}
             for label in self.multivariate.keys():
-                probabilities[label] = self.multivariate_normal(testSample, self.multivariate[label], self.covariance[label])
+                probabilities[label] = self.__multivariate_normal(testSample, self.multivariate[label], self.covariance[label])
             prediction.append(max(probabilities, key=probabilities.get))
         return prediction
     
 class LogisticRegression:
-    def __init__(self, lr=0.01, num_iter=100000, fit_intercept=True, verbose=False):
+    def __init__(self, lr=0.001, num_iter=100000, fit_intercept=True):
         self.lr = lr
         self.num_iter = num_iter
         self.fit_intercept = fit_intercept
-        self.verbose = verbose
+    
+    
+    def __sigmoid(self, z):
+        sigm = 1. / (1. + np.exp(-z))
+        return sigm
     
     def __add_intercept(self, X):
         intercept = np.ones((X.shape[0], 1))
         return np.concatenate((intercept, X), axis=1)
-    
-    def __sigmoid(self, z):
-        return 1 / (1 + np.exp(-z))
-    def __loss(self, h, y):
-        return (-y * np.log(h) - (1 - y) * np.log(1 - h)).mean()
-    
+        
     def fit(self, X, y):
         if self.fit_intercept:
             X = self.__add_intercept(X)
         
         # weights initialization
-        self.theta = np.zeros(X.shape[1])
+        self.weights = np.random.rand(X.shape[1])
+#        self.weights = np.zeros(X.shape[1])
         
         for i in range(self.num_iter):
-            z = np.dot(X, self.theta)
+            z = np.dot(X, self.weights)
             h = self.__sigmoid(z)
             gradient = np.dot(X.T, (h - y)) / y.size
-            self.theta -= self.lr * gradient
+            self.weights -= self.lr * gradient
             
-            z = np.dot(X, self.theta)
+            z = np.dot(X, self.weights)
             h = self.__sigmoid(z)
-            loss = self.__loss(h, y)
-                
-            if(self.verbose ==True and i % 10000 == 0):
-                print(f'loss: {loss} \t')
     
     def predict_prob(self, X):
         if self.fit_intercept:
             X = self.__add_intercept(X)
     
-        return self.__sigmoid(np.dot(X, self.theta))
+        return self.__sigmoid(np.dot(X, self.weights))
     
     def predict(self, X):
         return self.predict_prob(X).round()
@@ -213,6 +210,10 @@ if __name__=="__main__":
     stdOfPixelsFor7 = np.std(data7,axis=0)
     meanOfPixelsFor8 = np.mean(data8,axis=0)
     stdOfPixelsFor8 = np.std(data8,axis=0)
+    meanOfImagesFor7 = np.mean(data7,axis=1)
+    stdOfImagesFor7 = np.std(data7,axis=1)
+    meanOfImagesFor8 = np.mean(data8,axis=1)
+    stdOfImagesFor8 = np.std(data8,axis=1)
     
     # if we take pixelwise mean this is what the model learns for the 8
     plt.imshow(meanOfPixelsFor8.reshape(28,28))
@@ -221,6 +222,17 @@ if __name__=="__main__":
     
     # if we take pixelwise mean this is what the model learns for the 7
     plt.imshow(meanOfPixelsFor7.reshape(28,28))
+    plt.title("7")
+    plt.show()
+
+
+    # if we take pixelwise mean this is what the model learns for the 8
+    plt.hist(meanOfImagesFor8,bins=len(meanOfImagesFor8))
+    plt.title("8")
+    plt.show()
+    
+    # if we take pixelwise mean this is what the model learns for the 7
+    plt.hist(meanOfImagesFor7,bins=len(meanOfImagesFor7))
     plt.title("7")
     plt.show()
 
